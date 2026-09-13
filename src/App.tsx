@@ -21,6 +21,7 @@ import { SendPage } from './pages/SendPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { DuesPage } from './pages/DuesPage';
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
               <Route path="/send" element={<SendPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/dues" element={<DuesPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

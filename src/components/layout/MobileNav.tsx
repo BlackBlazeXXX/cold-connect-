@@ -9,6 +9,7 @@ import {
   Send,
   BarChart2,
   Settings,
+  Clock,
 } from 'lucide-react';
 
 const mobileNavItems = [
@@ -18,6 +19,7 @@ const mobileNavItems = [
   { label: 'Templates', path: '/templates', icon: <FileText className="w-4 h-4" /> },
   { label: 'Send', path: '/send', icon: <Send className="w-4 h-4" /> },
   { label: 'Analytics', path: '/analytics', icon: <BarChart2 className="w-4 h-4" /> },
+  { label: 'Dues', path: '/dues', icon: <Clock className="w-4 h-4" /> },
   { label: 'Settings', path: '/settings', icon: <Settings className="w-4 h-4" /> },
 ];
 

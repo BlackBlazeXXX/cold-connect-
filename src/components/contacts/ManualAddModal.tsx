@@ -83,6 +83,7 @@ export const ManualAddModal: React.FC<ManualAddModalProps> = ({
         last_sent_at: null,
         last_replied_at: null,
         follow_up_due_at: null,
+        last_shown_at: null,
         notes: notes.trim(),
         do_not_email: false,
         source: 'manual',

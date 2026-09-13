@@ -12,6 +12,7 @@ import {
   LogOut,
   Mail,
   Zap,
+  Clock,
 } from 'lucide-react';
 import { APP_CONFIG } from '../../constants/constants';
 import { useAuth } from '../../hooks/useAuth';
@@ -25,6 +26,7 @@ const iconMap: Record<string, React.ReactNode> = {
   Send: <Send className="w-4 h-4" />,
   BarChart2: <BarChart2 className="w-4 h-4" />,
   Settings: <Settings className="w-4 h-4" />,
+  Clock: <Clock className="w-4 h-4" />,
 };
 
 const navItems = [
@@ -34,6 +36,7 @@ const navItems = [
   { label: 'Templates', path: '/templates', iconKey: 'FileText' },
   { label: 'Send Email', path: '/send', iconKey: 'Send' },
   { label: 'Analytics', path: '/analytics', iconKey: 'BarChart2' },
+  { label: 'Dues & Tasks', path: '/dues', iconKey: 'Clock' },
   { label: 'Settings', path: '/settings', iconKey: 'Settings' },
 ];
 

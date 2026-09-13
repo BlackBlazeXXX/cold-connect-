@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   follow_up_days: APP_CONFIG.followUpDays,
   default_follow_up_days: 3,
   default_follow_up_2_days: 7,
+  new_leads_daily_limit: APP_CONFIG.newLeadsDailyLimit,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

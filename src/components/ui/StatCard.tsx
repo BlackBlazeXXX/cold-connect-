@@ -6,8 +6,9 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 export interface StatCardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   icon?: React.ReactNode;
+  action?: React.ReactNode;
   trend?: {
     value: string;
     isPositive: boolean;
@@ -20,6 +21,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   value,
   subtitle,
   icon,
+  action,
   trend,
   className = '',
 }) => {
@@ -27,11 +29,14 @@ export const StatCard: React.FC<StatCardProps> = ({
     <Card className={`p-6 bg-[#0c0c0c] border border-white/5 flex flex-col justify-between ${className}`}>
       <div className="flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">{title}</span>
-        {icon && (
-          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
-            {icon}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {action && <div>{action}</div>}
+          {icon && (
+            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
+              {icon}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-3">

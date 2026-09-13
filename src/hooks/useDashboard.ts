@@ -1,11 +1,11 @@
-// FILE: src/hooks/useDashboard.ts
 import { useMemo } from 'react';
+import { subDays, subWeeks, subMonths, isAfter } from 'date-fns';
 import { useContacts } from './useContacts';
 import { useDailyLimit } from './useDailyLimit';
 import { useEmailLogs } from './useEmailLogs';
 import { DashboardData, Contact } from '../types';
 
-export function useDashboard() {
+export function useDashboard(timeframe: '1d' | '1w' | '1m' | 'all' = '1w') {
   const { contacts, updateContact, markAsReplied } = useContacts();
   const { sentToday, dailyLimit, remaining, percentUsed } = useDailyLimit();
   const { logs } = useEmailLogs();
@@ -46,19 +46,39 @@ export function useDashboard() {
 
   const stats = useMemo(() => {
     const totalContacts = contacts.length;
-    const repliedContacts = contacts.filter(
-      (c) => (c.reply_count || 0) > 0 || c.status === 'Replied'
-    );
-    const sentLogs = logs.filter((l) => l.status === 'sent');
-    const replyRate = sentLogs.length > 0 ? Number(((repliedContacts.length / sentLogs.length) * 100).toFixed(1)) : 25;
+    const totalUncontacted = contacts.filter((c) => c.status === 'New').length;
+    const newToContactToday = contacts.filter((c) => c.status === 'New' && !c.do_not_email).length;
+    
+    const now = new Date();
+    let startDate: Date | null = null;
+    
+    if (timeframe === '1d') startDate = subDays(now, 1);
+    else if (timeframe === '1w') startDate = subWeeks(now, 1);
+    else if (timeframe === '1m') startDate = subMonths(now, 1);
+
+    const isWithinTimeframe = (dateStr?: string | null) => {
+      if (!startDate || !dateStr) return true;
+      return isAfter(new Date(dateStr), startDate);
+    };
+
+    const repliedContacts = contacts.filter((c) => {
+      const hasReplied = (c.reply_count || 0) > 0 || c.status === 'Replied';
+      return hasReplied && (timeframe === 'all' ? true : isWithinTimeframe(c.last_replied_at || c.created_at));
+    });
+
+    const sentLogs = logs.filter((l) => l.status === 'sent' && (timeframe === 'all' ? true : isWithinTimeframe(l.sent_at)));
+    
+    const replyRate = sentLogs.length > 0 ? Number(((repliedContacts.length / sentLogs.length) * 100).toFixed(1)) : (timeframe === 'all' ? 25 : 0);
 
     return {
       totalContacts,
+      totalUncontacted,
+      newToContactToday,
       replyRate,
       totalReplies: repliedContacts.length,
       followUpsDueToday: dashboardData.follow_ups_due.length,
     };
-  }, [contacts, logs, dashboardData.follow_ups_due]);
+  }, [contacts, logs, dashboardData.follow_ups_due, timeframe]);
 
   const extendFollowUp = async (contactId: string, days: number = 2) => {
     const target = contacts.find((c) => c.id === contactId);

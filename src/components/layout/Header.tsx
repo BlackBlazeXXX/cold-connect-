@@ -35,6 +35,10 @@ const PAGE_METADATA: Record<string, { title: string; subtitle: string }> = {
     title: 'Account Settings',
     subtitle: 'Configure Resend email sender, Google Drive resume, and Claude AI.',
   },
+  '/dues': {
+    title: 'Dues & Tasks',
+    subtitle: 'Manage your pending outreach and follow-ups',
+  },
 };
 
 export const Header: React.FC = () => {

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   CheckCircle2,
   BellRing,
+  Plus,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Tabs } from '../ui/Tabs';
@@ -72,12 +73,32 @@ export const FollowUpSection: React.FC<FollowUpSectionProps> = ({
           </div>
         </div>
 
-        <Tabs
-          tabs={tabs}
-          activeTab={activeTab}
-          onChange={(t) => setActiveTab(t as any)}
-          variant="pills"
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Tabs
+            tabs={tabs}
+            activeTab={activeTab}
+            onChange={(t) => setActiveTab(t as any)}
+            variant="pills"
+          />
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dues?tab=new')}
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+            >
+              View All New Dues
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/dues?tab=followup')}
+              leftIcon={<Clock className="w-3.5 h-3.5" />}
+            >
+              View All Follow-Up Dues
+            </Button>
+          </div>
+        </div>
       </div>
 
       {displayedList.length === 0 ? (

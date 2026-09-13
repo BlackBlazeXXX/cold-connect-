@@ -10,6 +10,7 @@ import { ResendConfig } from '../components/settings/ResendConfig';
 import { ResumeConfig } from '../components/settings/ResumeConfig';
 import { DailyLimitConfig } from '../components/settings/DailyLimitConfig';
 import { FollowUpIntervalConfig } from '../components/settings/FollowUpIntervalConfig';
+import { NewLeadsLimitConfig } from '../components/settings/NewLeadsLimitConfig';
 import { AnthropicConfig } from '../components/settings/AnthropicConfig';
 import { DataManagement } from '../components/settings/DataManagement';
 import { Button } from '../components/ui/Button';
@@ -110,7 +111,16 @@ export const SettingsPage: React.FC = () => {
         }}
       />
 
-      {/* SECTION 5: Anthropic Claude Config */}
+      {/* SECTION 5: New Leads Daily Limit */}
+      <NewLeadsLimitConfig
+        dailyLimit={settings.new_leads_daily_limit || 7}
+        onChange={(limit) => {
+          updateSettings({ new_leads_daily_limit: limit });
+          handleSaveAll();
+        }}
+      />
+
+      {/* SECTION 6: Anthropic Claude Config */}
       <AnthropicConfig
         apiKey={settings.anthropic_api_key}
         onChange={(key) => {

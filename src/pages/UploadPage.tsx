@@ -116,6 +116,7 @@ Elena Rostova,Datadog,elena.r@datadoghq.com,Software Engineer
           last_sent_at: null,
           last_replied_at: null,
           follow_up_due_at: null,
+          last_shown_at: null,
           notes: '',
           do_not_email: false,
           source: selectedType,

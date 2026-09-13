@@ -1,9 +1,11 @@
 // FILE: src/hooks/useContacts.ts
-import { useState, useEffect, useCallback } from 'react';
-import { Contact, ContactStatus } from '../types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Contact, ContactStatus, EmailLog } from '../types';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { STORAGE_KEYS } from '../constants/constants';
+import { APP_CONFIG } from '../constants/constants';
+import { differenceInDays, startOfDay } from 'date-fns';
 
 const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
   {
@@ -17,6 +19,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     last_replied_at: null,
     follow_up_due_at: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+    last_shown_at: null,
     notes: 'Referred by LinkedIn posting for Product Engineering team.',
     do_not_email: false,
     created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -34,6 +37,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
     last_replied_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
     follow_up_due_at: null,
+    last_shown_at: null,
     notes: 'Replied asking for portfolio GitHub links and availability.',
     do_not_email: false,
     created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
@@ -51,6 +55,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     last_replied_at: null,
     follow_up_due_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // Due/Overdue
+    last_shown_at: null,
     notes: 'Follow-up sent highlighting Next.js performance optimizations.',
     do_not_email: false,
     created_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
@@ -68,6 +73,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: null,
     last_replied_at: null,
     follow_up_due_at: null,
+    last_shown_at: null,
     notes: 'Recruiter for desktop and web experiences.',
     do_not_email: false,
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
@@ -85,6 +91,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: null,
     last_replied_at: null,
     follow_up_due_at: null,
+    last_shown_at: null,
     notes: 'Found on Tech Career fair directory.',
     do_not_email: false,
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
@@ -102,6 +109,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: null,
     last_replied_at: null,
     follow_up_due_at: null,
+    last_shown_at: null,
     notes: 'Role filled internally; requested to withhold outreach.',
     do_not_email: true,
     created_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
@@ -119,6 +127,7 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     last_sent_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     last_replied_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     follow_up_due_at: null,
+    last_shown_at: null,
     notes: 'Phone screen scheduled for upcoming Tuesday.',
     do_not_email: false,
     created_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -126,6 +135,125 @@ const SEED_CONTACTS: Omit<Contact, 'user_id'>[] = [
     upload_batch_id: 'batch_seed_0',
   }
 ];
+
+// Follow-up stage calculation helpers
+export type FollowUpStage = 'new' | 'email_sent' | 'followup_1' | 'followup_2' | 'never_replied' | 'replied' | 'do_not_email';
+
+export function getInitialEmailLog(emailLogs: EmailLog[], contactId: string): EmailLog | undefined {
+  return emailLogs.find((l) => l.contact_id === contactId && l.email_type === 'initial');
+}
+
+export function getFollowUpLog(emailLogs: EmailLog[], contactId: string, type: EmailLog['email_type']): EmailLog | undefined {
+  return emailLogs.find((l) => l.contact_id === contactId && l.email_type === type);
+}
+
+export function getDaysSinceInitial(emailLogs: EmailLog[], contactId: string, now: Date): number | null {
+  const initialLog = getInitialEmailLog(emailLogs, contactId);
+  if (!initialLog) return null;
+  return differenceInDays(now, new Date(initialLog.sent_at));
+}
+
+export function getFollowUpStage(contact: Contact, emailLogs: EmailLog[], now: Date): FollowUpStage {
+  if (contact.do_not_email) return 'do_not_email';
+  if (contact.status === 'Replied' || (contact.reply_count > 0 && contact.last_replied_at)) return 'replied';
+
+  const hasInitialEmail = emailLogs.some((l) => l.contact_id === contact.id && l.email_type === 'initial');
+  if (!hasInitialEmail && !contact.last_sent_at) return 'new';
+
+  const hasFollowUp1 = emailLogs.some((l) => l.contact_id === contact.id && l.email_type === 'follow_up_1');
+  const hasFollowUp2 = emailLogs.some((l) => l.contact_id === contact.id && l.email_type === 'follow_up_2');
+
+  const daysSinceInitial = getDaysSinceInitial(emailLogs, contact.id, now);
+
+  // After 12 days with no reply → Never Replied
+  if (daysSinceInitial !== null && daysSinceInitial >= 12) return 'never_replied';
+
+  // Has follow-up 2 sent → Never Replied (lifecycle complete)
+  if (hasFollowUp2) return 'never_replied';
+
+  // Has follow-up 1, check for follow-up 2 eligibility (7+ days)
+  if (hasFollowUp1 && daysSinceInitial !== null && daysSinceInitial >= 7) return 'followup_2';
+  if (hasFollowUp1 && daysSinceInitial !== null && daysSinceInitial < 7) return 'followup_1';
+
+  // Has initial email, no follow-up 1 yet, check for follow-up 1 eligibility (3+ days)
+  if (hasInitialEmail && !hasFollowUp1 && daysSinceInitial !== null && daysSinceInitial >= 3) return 'followup_1';
+
+  // Has initial email, less than 3 days → Email Sent (waiting for follow-up eligibility)
+  if (hasInitialEmail && !hasFollowUp1 && daysSinceInitial !== null && daysSinceInitial < 3) return 'email_sent';
+
+  // Has initial email but can't determine stage → Email Sent
+  if (hasInitialEmail && !hasFollowUp1) return 'email_sent';
+
+  return 'new';
+}
+
+export function filterContactsByStage(
+  contacts: Contact[],
+  emailLogs: EmailLog[],
+  stage: FollowUpStage,
+  now: Date = new Date()
+): Contact[] {
+  return contacts.filter((c) => {
+    const contactStage = getFollowUpStage(c, emailLogs, now);
+    return contactStage === stage;
+  });
+}
+
+// Daily New Leads helpers
+export function getDailyNewLeads(
+  contacts: Contact[],
+  emailLogs: EmailLog[],
+  dailyLimit: number,
+  now: Date = new Date()
+): { batch: Contact[]; totalRemaining: number } {
+  // Step 1: Find ALL contacts that were NEVER emailed and not do_not_email
+  const allNewLeads = contacts.filter((c) => {
+    if (c.do_not_email) return false;
+    const stage = getFollowUpStage(c, emailLogs, now);
+    return stage === 'new';
+  });
+
+  // Step 2: Split into two groups:
+  //   Group A: Never shown before (last_shown_at === null) — PRIORITY
+  //   Group B: Shown before but on a PREVIOUS day — SECONDARY
+  const todayStr = startOfDay(now).toISOString();
+
+  const neverShown = allNewLeads.filter((c) => !c.last_shown_at);
+  const shownBeforeToday = allNewLeads.filter((c) => {
+    if (!c.last_shown_at) return false;
+    const shownDate = startOfDay(new Date(c.last_shown_at)).toISOString();
+    return shownDate < todayStr;
+  });
+
+  // Step 3: Combine (new first, then older shown), take first N
+  const batch = [...neverShown, ...shownBeforeToday].slice(0, dailyLimit);
+  const totalRemaining = allNewLeads.length;
+
+  return { batch, totalRemaining };
+}
+
+export async function markLeadsAsShown(
+  contactIds: string[],
+  updateContact: (id: string, updates: Partial<Contact>) => Promise<void>
+): Promise<void> {
+  const now = new Date().toISOString();
+  // Update each contact's last_shown_at to now
+  for (const id of contactIds) {
+    await updateContact(id, { last_shown_at: now });
+  }
+}
+
+export function getRemainingLeadsCount(
+  contacts: Contact[],
+  emailLogs: EmailLog[],
+  now: Date = new Date()
+): number {
+  return contacts.filter((c) => {
+    if (c.do_not_email) return false;
+    const stage = getFollowUpStage(c, emailLogs, now);
+    return stage === 'new';
+  }).length;
+}
 
 export function useContacts() {
   const { user } = useAuth();

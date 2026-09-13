@@ -9,6 +9,7 @@ export const APP_CONFIG = {
   followUpDays: 3,
   maxTemplates: 10,
   maxTemplateVersions: 5,
+  newLeadsDailyLimit: 7,
 };
 
 export const EMAIL_PLACEHOLDERS = [

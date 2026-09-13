@@ -21,6 +21,7 @@ export interface Contact {
   last_sent_at: string | null; // ISO timestamp
   last_replied_at: string | null;
   follow_up_due_at: string | null; // auto-calculated
+  last_shown_at: string | null; // ISO timestamp - when shown in daily new leads batch
   notes: string;
   do_not_email: boolean;
   created_at: string;
@@ -59,7 +60,7 @@ export interface EmailLog {
   subject_used: string;
   body_used: string;
   sent_at: string;
-  email_type: "initial" | "follow_up_1" | "follow_up_2";
+  email_type: "initial" | "follow_up_1" | "follow_up_2" | "follow_up_3";
   resend_id?: string | null;
   status: "sent" | "failed" | "pending";
   error_message?: string | null;
@@ -106,6 +107,7 @@ export interface UserSettings {
   follow_up_days: number;
   default_follow_up_days?: number;
   default_follow_up_2_days?: number;
+  new_leads_daily_limit?: number;
   created_at: string;
   updated_at: string;
 }
