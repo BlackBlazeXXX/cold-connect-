@@ -1,7 +1,7 @@
 # 🏗️ BUILD STATUS — Cold Connect
 
 **Last Updated:** 2026-09-14  
-**Current Sprint:** Daily New Leads Auto-Rotation
+**Current Sprint:** Phase 1 COMPLETE — Ready to deploy frontend on Vercel
 
 ---
 
@@ -14,6 +14,10 @@
 | **Module 3** | Dashboard Follow-Up Links | `[x]` | 2026-09-06 |
 | **Module 4** | Dues & Tasks Redesign — Follow-up Stage Logic | `[x]` | 2026-09-11 |
 | **Module 5** | Daily New Leads Auto-Rotation | `[x]` | 2026-09-14 |
+| **Module 6** | Replies Due + Automatic Reply Flow (Phase 1) | `[x]` | 2026-09-14 |
+| **Module 7** | Monorepo Restructure (frontend + backend split) | `[x]` | 2026-09-14 |
+| **Module 8** | Stat Cards Upgrade (sparkline + breakdown) | `[x]` | 2026-09-14 |
+| **Module 9** | Activity Feed (calendar + detail modal + full page) | `[x]` | 2026-09-14 |
 
 ---
 
@@ -108,6 +112,58 @@
 - [x] "View All New Dues" button → `/dues?tab=new`
 - [x] "View All Follow-Up Dues" button → `/dues?tab=followup`
 - [x] "Dues & Tasks" button in Quick Navigation section
+
+---
+
+## 📦 MODULE 6 DETAILS — Replies Due + Automatic Reply Flow (Phase 1)
+
+### Files Modified
+- [x] `src/types/index.ts` — Added `RepliedAfterStage` type + `replied_after: 'initial'|'follow_up_1'|'follow_up_2'|'late'|null` on Contact
+- [x] `src/hooks/useContacts.ts` — `getFollowUpStage()` now checks `replied_after` first; added `getRepliedAfterStage()`, `filterRepliedContacts()`, `markReplyDetected()`, `RepliedAfterFilter`, `REPLIED_AFTER_LABELS`; `markAsReplied` sets `replied_after`
+- [x] `src/hooks/useEmailLogs.ts` — Added replied contacts email logs (log_reply_1a..log_reply_5b)
+- [x] `src/pages/DuesPage.tsx` — New 3rd tab "Replies Due" + sub-filter dropdown (All / After Initial / After FU1 / After FU2 / Late) with counts, URL param support, badge + empty states
+- [x] `src/components/contacts/ContactTable.tsx` — Removed "Mark as Replied" button + `onMarkReplied` prop
+- [x] `src/components/contacts/ContactDrawer.tsx` — Removed "Mark Replied" button + `onMarkReplied` prop
+- [x] `src/components/dashboard/FollowUpSection.tsx` — Removed "Mark Replied" button + `onMarkReplied` prop
+- [x] `src/pages/ContactsPage.tsx` — Cleaned up removed props / `markReplied`
+- [x] `src/pages/DashboardPage.tsx` — Removed unused `markReplied` destructure
+- [x] `src/hooks/useDashboard.ts` — Removed dead `markAsReplied` return
+- [x] `src/components/contacts/ManualAddModal.tsx` + `src/pages/UploadPage.tsx` — New contacts get `replied_after: null`
+
+### Seed Data Added
+- [x] 5 replied contacts: Sarah Kim/Netflix (`initial`), Alex Chen/Apple (`follow_up_1`), Maria Garcia/Amazon (`follow_up_2`), Tom Lee/Spotify (`late`), Jane Doe/Uber (`follow_up_1`)
+
+### Features Delivered
+- [x] Replies Due tab auto-classifies replies by stage (initial/FU1/FU2/late) based on days elapsed
+- [x] Zero manual reply buttons anywhere in UI — fully automatic
+- [x] `markReplyDetected()` = injection point for Phase 2 (Resend webhooks / Gmail API / IMAP)
+- [x] Non-replied fallback: legacy status-based detection still works for old localStorage data
+- [x] TypeScript 0 errors + production build passes
+
+---
+
+## 📦 MODULE 7 DETAILS — Monorepo Restructure
+
+### What was done
+- [x] Moved entire Vite React app into `frontend/` (git mv + robocopy for locked src)
+- [x] Created `backend/` scaffold: `package.json`, `tsconfig.json`, `src/index.ts` (Express health endpoint), `README.md`
+- [x] Moved `supabase/schema.sql` → `backend/supabase/schema.sql`
+- [x] Created root `README.md` (monorepo overview + deploy instructions)
+- [x] Created root `.gitignore` (covers both subdirs)
+- [x] No installs run (backend deps listed in manifest, awaiting Phase 2)
+
+### Deploy paths ready
+- [x] **Vercel:** import repo → Root Directory = `frontend` → env from `.env.example`
+- [x] **Railway:** import repo → Root Directory = `backend` → add DB/API keys
+
+### Files moved / created
+- [x] All `src/`, config files, `package.json` etc. → `frontend/`
+- [x] `backend/package.json` — Express + Supabase + Resend + Gemini deps (not installed)
+- [x] `backend/tsconfig.json` — Node ESM config
+- [x] `backend/src/index.ts` — Express server scaffold
+- [x] `backend/supabase/schema.sql` — DB schema for Phase 2
+- [x] `README.md` (root) — monorepo overview
+- [x] `.gitignore` (root) — covers frontend + backend
 
 ---
 
